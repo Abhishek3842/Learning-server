@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { CatchAsyncError } from "../middleware/catchAsyncErrors";
 import ErrorHandler from "../utils/ErrorHandler";
 import { IOrder } from "../models/order.Model";
+
 import userModel from "../models/user.model";
 import CourseModel, { ICourse } from "../models/course.model";
 import path from "path";
@@ -51,7 +52,7 @@ export const createOrder = CatchAsyncError(
       }
 
       const data: any = {
-        courseId: course._id,
+        courseId: course._id.toString(), // Convert ObjectId to string
         userId: user?._id,
         payment_info,
       };
@@ -99,7 +100,8 @@ export const createOrder = CatchAsyncError(
         message: `You have a new order from ${course?.name}`,
       });
 
-      course.purchased = course.purchased + 1;
+      // Safely handle the 'purchased' field
+      course.purchased = (course.purchased ?? 0) + 1;
 
       await course.save();
 
@@ -109,6 +111,7 @@ export const createOrder = CatchAsyncError(
     }
   }
 );
+
 
 // get All orders --- only for admin
 export const getAllOrders = CatchAsyncError(

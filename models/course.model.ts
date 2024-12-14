@@ -33,7 +33,7 @@ interface ICourseData extends Document{
     isCompleted: boolean;
 }
 
-interface ICourse extends Document{
+ export interface ICourse extends Document{
     _id: Types.ObjectId; 
     name:string;
     description:string;
