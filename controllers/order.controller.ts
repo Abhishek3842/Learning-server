@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import { CatchAsyncError } from "../middleware/catchAsyncErrors";
 import ErrorHandler from "../utils/ErrorHandler";
 import { IOrder } from "../models/order.Model";
-
 import userModel from "../models/user.model";
 import CourseModel, { ICourse } from "../models/course.model";
 import path from "path";
@@ -23,9 +22,7 @@ export const createOrder = CatchAsyncError(
       if (payment_info) {
         if ("id" in payment_info) {
           const paymentIntentId = payment_info.id;
-          const paymentIntent = await stripe.paymentIntents.retrieve(
-            paymentIntentId
-          );
+          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
           if (paymentIntent.status !== "succeeded") {
             return next(new ErrorHandler("Payment not authorized!", 400));
@@ -36,13 +33,11 @@ export const createOrder = CatchAsyncError(
       const user = await userModel.findById(req.user?._id);
 
       const courseExistInUser = user?.courses.some(
-        (course: any) => course._id.toString() === courseId
+        (course: any) => course._id.toString() === courseId.toString()
       );
 
       if (courseExistInUser) {
-        return next(
-          new ErrorHandler("You have already purchased this course", 400)
-        );
+        return next(new ErrorHandler("You have already purchased this course", 400));
       }
 
       const course: ICourse | null = await CourseModel.findById(courseId);
@@ -52,7 +47,7 @@ export const createOrder = CatchAsyncError(
       }
 
       const data: any = {
-        courseId: course._id.toString(), // Convert ObjectId to string
+        courseId: course._id, // Use ObjectId directly
         userId: user?._id,
         payment_info,
       };
@@ -89,9 +84,7 @@ export const createOrder = CatchAsyncError(
       }
 
       user?.courses.push(course?._id);
-
       await redis.set(req.user?._id, JSON.stringify(user));
-
       await user?.save();
 
       await NotificationModel.create({
@@ -100,9 +93,7 @@ export const createOrder = CatchAsyncError(
         message: `You have a new order from ${course?.name}`,
       });
 
-      // Safely handle the 'purchased' field
       course.purchased = (course.purchased ?? 0) + 1;
-
       await course.save();
 
       newOrder(data, res, next);
@@ -111,7 +102,6 @@ export const createOrder = CatchAsyncError(
     }
   }
 );
-
 
 // get All orders --- only for admin
 export const getAllOrders = CatchAsyncError(
@@ -124,7 +114,7 @@ export const getAllOrders = CatchAsyncError(
   }
 );
 
-//  send stripe publishble key
+// send stripe publishable key
 export const sendStripePublishableKey = CatchAsyncError(
   async (req: Request, res: Response) => {
     res.status(200).json({
