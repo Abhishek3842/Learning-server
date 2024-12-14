@@ -20,6 +20,7 @@ import {
 } from "../services/user.service";
 import cloudinary from "cloudinary";
 import { ObjectId } from 'mongoose';
+import { Types } from "mongoose";
 
 // register user
 interface IRegistrationBody {
@@ -430,9 +431,11 @@ export const getAllUsers = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, role } = req.body;
+
       const isUserExist = await userModel.findOne({ email });
       if (isUserExist) {
-        const id = (isUserExist._id as ObjectId).toString();  // Type assertion to ObjectId
+        // Safely convert _id to string
+        const id = isUserExist._id.toString();
         updateUserRoleService(res, id, role);
       } else {
         res.status(400).json({
